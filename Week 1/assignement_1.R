@@ -175,6 +175,98 @@ st %>%
 
 st %>% 
         group_by(brand) %>% 
-        filter(StockPrice == max(StockPrice)) %>% 
+        filter(StockPrice == max(StockPrice))
         
+
+st %>%  filter(Date > ymd("1995-01-01") & Date < ymd("2001-01-01")) %>% 
+        ggplot(aes(x = Date, y = StockPrice, colour = brand)) +
+        geom_line() + 
+        geom_vline(xintercept = as.numeric(as.POSIXct("1997-09-01")), color = "blue", lwd = 1, alpha= 0.3) + 
+        geom_vline(xintercept = as.numeric(as.POSIXct("1997-11-01")), color = "blue", lwd = 1, alpha= 0.3)
+
+ggsave("stock_zoom_2.png")
+
+st %>%  filter(Date > ymd("2003-01-01") & Date < ymd("2006-01-01")) %>% 
+        ggplot(aes(x = Date, y = StockPrice, colour = brand)) +
+        geom_line() 
+
+st %>% 
+        group_by(brand, month(Date)) %>% 
+        summarise(mon_st = mean(StockPrice)) %>% 
+        left_join(
+                
+                st %>% group_by(brand) %>% 
+                        summarise(ov_mean = mean(StockPrice))
+        ) %>% 
+        mutate(grt_avg = mon_st > ov_mean) %>% 
+        filter(brand == "ibm")
         
+
+st %>% 
+        group_by(brand, month(Date)) %>% 
+        summarise(mon_st = mean(StockPrice)) %>%
+        mutate(rank = min_rank(mon_st)) %>% 
+        arrange(brand, rank) %>% 
+        filter(rank == 12)
+        
+
+st %>% 
+        group_by(brand, month(Date)) %>% 
+        summarise(mon_st = mean(StockPrice)) %>%
+        mutate(rank = min_rank(mon_st)) %>%
+        left_join(
+                
+                st %>%  group_by(brand, month = month(Date)) %>% 
+                        summarise(mon_st = mean(StockPrice)) %>% 
+                        mutate(dec_st = ifelse(month==12, mon_st, 0), 
+                               jan_st = ifelse(month==1, mon_st, 0)) %>% 
+                        filter(month %in% c(1, 12)) %>% 
+                        group_by(brand) %>% 
+                        summarise(dec_st = sum(dec_st), 
+                                  jan_st = sum(jan_st))
+        ) %>% 
+        mutate(check = (mon_st > dec_st & mon_st > jan_st))
+
+
+st %>% 
+        group_by(brand, month = month(Date)) %>% 
+        summarise(mon_st = mean(StockPrice)) %>%
+        mutate(rank = min_rank(mon_st)) %>%
+        filter(month %in% c(12, 1))
+
+## Learn to use the window function 
+
+######################### Part 3: EMOGRAPHICS AND EMPLOYMENT IN THE UNITED STATES
+
+
+cps = read_csv("../data/week 1/CPSData.csv")
+
+View(cps)
+
+dim(cps)
+
+table(cps$Industry) %>% 
+        as.data.frame() %>% 
+        arrange(desc(Freq)) %>% 
+        head()
+
+table(cps$Citizenship=="Non-Citizen") %>% prop.table() %>% sort()
+
+table(cps$Race, cps$Hispanic)
+
+cps %>% 
+        summarise_each(funs(anyNA(.))) %>% 
+        select(which(as.numeric(.)==1))
+
+table(cps$Region, is.na(cps$Married))
+table(cps$Sex, is.na(cps$Married))
+table(cps$Age, is.na(cps$Married))
+table(cps$Citizenship, is.na(cps$Married))
+
+cps %>% 
+        filter(is.na(MetroAreaCode)==T) %>% count(State) %>% dim(.)    # table() is hard to work with dplyr, use count()
+
+cps %>% 
+        filter(is.na(MetroAreaCode)==F) %>% count(State) %>% dim(.)
+
+
