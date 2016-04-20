@@ -7,6 +7,7 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 library(ggthemes)
+library(magrittr)
 
 mvt <- read_csv("../data/mvtWeek1.csv")
 
@@ -280,11 +281,61 @@ cps %>%
 
 
 cps %>% 
-        filter(is.na(MetroAreaCode)==F) %>% count(State) %>% 
-        mutate(prop = n/sum(n)) %>% View()
-        filter(abs(prop - 0.3)<0.2)
+        filter(is.na(MetroAreaCode)==T) %>% 
+        group_by(State) %>% 
+        summarise(n = n()) %>% 
+        left_join(
+                cps %>% 
+                        group_by(State) %>% 
+                        summarise(n_tot = n())
+        ) %>% 
+        mutate(prop = n/n_tot) %>% 
+        arrange(abs(prop - 0.3))
+
+cps %>% 
+        filter(is.na(MetroAreaCode)==T) %>% 
+        group_by(State) %>% 
+        summarise(n = n()) %>% 
+        left_join(
+                cps %>% 
+                        group_by(State) %>% 
+                        summarise(n_tot = n())
+        ) %>% 
+        mutate(prop = n/n_tot) %>% 
+        arrange(desc(prop))
+
+ma_code <- read_csv("../data/week 1/MetroAreaCodes.csv")
+
+cy_code <- read_csv("../data/week 1/CountryCodes.csv")
+
+dim(ma_code)
+dim(cy_code)
+
+ma_code$Code %<>% as.numeric()
+
+cps %>% 
+        left_join(ma_code, c("MetroAreaCode"="Code")) %>% count(is.na(MetroArea))
 
 
+cps %<>% 
+        left_join(ma_code, c("MetroAreaCode"="Code"))
 
+cps %>% 
+        filter(MetroArea %in% c("Atlanta-Sandy Springs-Marietta, GA",
+                                    "Baltimore-Towson, MD", 
+                                    "Boston-Cambridge-Quincy, MA-NH", 
+                                    "San Francisco-Oakland-Fremont, CA")) %>% 
+        count(MetroArea) %>%
+        top_n(2, n)
 
+cps %>% 
+        filter(Hispanic==1) %>% 
+        count(MetroArea) %>% 
+        left_join(
+                cps %>% 
+                        count(MetroArea) %>% 
+                        select(MetroArea, n_sub = n)) %>% 
+        mutate(n_prop = n/n_sub) %>% 
+        top_n(1, n_prop)
+        
 
