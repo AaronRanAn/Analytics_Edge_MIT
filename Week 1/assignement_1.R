@@ -269,4 +269,22 @@ cps %>%
 cps %>% 
         filter(is.na(MetroAreaCode)==F) %>% count(State) %>% dim(.)
 
+# minus that with all states 
+
+cps %>% 
+        filter(is.na(MetroAreaCode)==T) %>% count(Region) %>% 
+        mutate(prop = n/sum(n))
+
+
+# MetroAreaCode is missing if an interviewee does not live in a metropolitan area.
+
+
+cps %>% 
+        filter(is.na(MetroAreaCode)==F) %>% count(State) %>% 
+        mutate(prop = n/sum(n)) %>% View()
+        filter(abs(prop - 0.3)<0.2)
+
+
+
+
 
