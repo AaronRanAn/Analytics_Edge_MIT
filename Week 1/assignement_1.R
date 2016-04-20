@@ -337,5 +337,45 @@ cps %>%
                         select(MetroArea, n_sub = n)) %>% 
         mutate(n_prop = n/n_sub) %>% 
         top_n(1, n_prop)
+
+cps %>% 
+        group_by(MetroArea) %>% 
+        summarise(asian_prop = mean(Race == "Asian", na.rm = T)) %>% 
+        filter(asian_prop > 0.2)
+
+cps %>% 
+        group_by(MetroArea) %>% 
+        summarise(edu_prop = mean(Education == "No high school diploma", na.rm = T)) %>% 
+        arrange(edu_prop)
+
+
+cy_code$Code %<>% as.numeric()
+
+cps %<>% 
+        left_join(cy_code, c("CountryOfBirthCode"="Code"))
+
+cps %>% 
+        filter(is.na(Country)==T) %>% 
+        count()
+
+cps %>% 
+        filter(!(Country %in% c("Mexico", "United States", "Canada"))) %>% 
+        count(Country) %>% 
+        top_n(1)
+
+cps %>% 
+        filter(MetroArea == "New York-Northern New Jersey-Long Island, NY-NJ-PA" & is.na(Country)==F) %>% 
+        count(Country!="United States") %>% prop.table(.)
+
+cps %>% 
+        filter(Country=="India") %>% 
+        count(MetroArea) %>% 
+        top_n(1)
+
+cps %>% 
+        filter(Country=="Somalia") %>% 
+        count(MetroArea) %>% 
+        top_n(2)
         
+
 
